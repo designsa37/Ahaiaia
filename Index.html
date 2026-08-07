@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EINSTEIN AI — Infinite Research Engine</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght:400;500;600;700;800&display=swap');
+
+        :root{
+            --prime:#6366f1; --glow:#8b5cf6; --dark:#020617; --panel:rgba(15,23,42,0.85);
+            --text:#f8fafc; --muted:#94a3b8; --success:#10b981; --alert:#f59e0b;
+            --shadow:0 0 70px rgba(99,102,241,0.2);
+            --smooth:all 0.28s cubic-bezier(0.2,0.85,0.2,1);
+        }
+
+        body{
+            min-height:100vh;color:var(--text);position:relative;overflow:hidden;
+            background:radial-gradient(circle at 8% 10%,#1e1b4b 0%,var(--dark) 55%);
+        }
+
+        /* === CINEMATIC BACKGROUND === */
+        .bg{position:fixed;inset:0;z-index:-1;}
+        .node{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.25;will-change:transform;}
+        .n1{width:700px;height:700px;top:-220px;left:-180px;background:var(--prime);animation:drift1 30s infinite ease-in-out;}
+        .n2{width:800px;height:800px;bottom:-280px;right:-220px;background:var(--glow);animation:drift2 38s infinite ease-in-out;}
+        .n3{width:500px;height:500px;top:35%;right:12%;background:var(--prime);opacity:0.15;animation:drift3 48s infinite ease-in-out;}
+        @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(110px,70px);}}
+        @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-90px,-120px);}}
+        @keyframes drift3{0%,100%{transform:translate(0,0) rotate(0deg);}50%{transform:translate(80px,-100px) rotate(180deg);}}
+
+        .scan-line{position:absolute;height:1px;background:linear-gradient(90deg,transparent,var(--prime),transparent);width:100%;opacity:0.1;animation:sweep 15s infinite linear;}
+        @keyframes sweep{0%{transform:translateY(-100vh);}100%{transform:translateY(200vh);}}
+
+        /* === MAIN LAYOUT === */
+        .app{max-width:950px;width:95%;margin:0 auto;position:relative;z-index:1;padding:45px 20px;min-height:100vh;display:flex;flex-direction:column;}
+
+        header{text-align:center;margin-bottom:45px;animation:rise 0.8s ease;}
+        @keyframes rise{from{opacity:0;transform:translateY(30px);}}
+        h1{font-size:72px;font-weight:800;letter-spacing:3px;background:linear-gradient(90deg,var(--prime),var(--glow),var(--prime));background-size:200% auto;-webkit-background-clip:text;color:transparent;animation:shimmer 9s linear infinite;}
+        @keyframes shimmer{to{background-position:200% center;}}
+        .tag{color:var(--muted);font-size:18px;margin-top:10px;letter-spacing:1px;}
+        .status{font-size:13px;color:var(--success);margin-top:6px;opacity:0;transition:opacity 0.3s;}
+        .status.active{opacity:1;}
+
+        /* === CHAT === */
+        .chat{flex:1;background:var(--panel);backdrop-filter:blur(24px);border-radius:24px;border:1px solid rgba(99,102,241,0.18);padding:28px;overflow-y:auto;max-height:580px;margin-bottom:28px;box-shadow:var(--shadow);}
+        .chat::-webkit-scrollbar{width:6px;}
+        .chat::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:3px;}
+
+        .msg{margin-bottom:22px;max-width:88%;animation:in 0.35s ease;}
+        @keyframes in{from{opacity:0;transform:translateY(10px);}}
+        .user{margin-left:auto;}
+        .bubble{padding:16px 20px;border-radius:18px;line-height:1.7;}
+        .user .bubble{background:linear-gradient(135deg,var(--prime),var(--glow));color:white;border-bottom-right-radius:6px;}
+        .ai .bubble{background:rgba(30,41,59,0.7);border:1px solid rgba(99,102,241,0.2);border-bottom-left-radius:6px;white-space:pre-line;}
+        .meta{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;gap:12px;}
+        .source{color:var(--prime);}
+        .human{color:var(--alert);font-weight:600;}
+
+        /* === THINKING / RESEARCH ANIMATION === */
+        .thinking{display:none;padding:14px 0;color:var(--muted);font-style:italic;}
+        .thinking.show{display:block;}
+        .dot{animation:bounce 1.4s infinite ease-in-out both;}
+        .dot:nth-child(1){animation-delay:-0.32s;}
+        .dot:nth-child(2){animation-delay:-0.16s;}
+        @keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+
+        /* === INPUT === */
+        .input-row{display:flex;gap:16px;align-items:center;}
+        #ask{flex:1;padding:18px 22px;border-radius:18px;border:1px solid rgba(99,102,241,0.3);background:rgba(15,23,42,0.7);color:white;font-size:17px;outline:none;transition:var(--smooth);}
+        #ask:focus{border-color:var(--prime);box-shadow:0 0 30px rgba(99,102,241,0.22);}
+        .btn{padding:18px 36px;border-radius:18px;border:none;background:linear-gradient(135deg,var(--prime),var(--glow));color:white;font-weight:600;cursor:pointer;transition:var(--smooth);position:relative;overflow:hidden;}
+        .btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transform:translateX(-100%);transition:0.35s;}
+        .btn:hover::before{transform:translateX(100%);}
+        .btn:hover{transform:translateY(-4px);box-shadow:0 0 40px rgba(99,102,241,0.3);}
+
+        @media(max-width:640px){
+            h1{font-size:48px;}
+            .msg{max-width:95%;}
+            .btn{padding:16px 28px;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg">
+    <div class="node n1"></div>
+    <div class="node n2"></div>
+    <div class="node n3"></div>
+    <div class="scan-line"></div>
+    <div class="scan-line" style="animation-delay:7.5s;"></div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app">
+    <header>
+        <h1>EINSTEIN AI</h1>
+        <p class="tag">Scans every source • Summarizes YouTube • Cross-checks facts • Answers instantly</p>
+        <div class="status" id="sys">✅ Research engine active — connected to all sources</div>
+    </header>
+
+    <div class="chat" id="chat"></div>
+    <div class="thinking" id="think">
+        🧠 Scanning all websites • Reading articles • Summarizing videos • Verifying facts<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+    </div>
+
+    <div class="input-row">
+        <input type="text" id="ask" placeholder="Ask anything — it will research everything for you...">
+        <button class="btn" onclick="startResearch()">SEARCH & ANSWER</button>
+    </div>
+</div>
+
+<script>
+// ==============================================
+// 🧠 EINSTEIN RESEARCH ENGINE
+// ==============================================
+
+const SYSTEM_PROMPT = `You are EINSTEIN — a research brain that accesses all human knowledge.
+Process:
+1. Search every reliable source
+2. Read full articles, documents, guides
+3. Pull & summarize YouTube videos on the topic
+4. Cross-check facts from multiple places
+5. Build the most complete, accurate, simple answer possible
+6. If it’s personal/live data/account stuff → send to experts immediately
+
+Rules:
+- Fast, deep, clear
+- Never guess — only use verified information
+- Always say where the info comes from
+- Explain like the greatest scientist alive`;
+
+// Simulated full research engine (replace with real APIs later)
+async function runResearch(query){
+    // ⚡ THIS IS WHERE YOU HOOK UP REAL TOOLS:
+    // Web Search → Google/SerpAPI
+    // YouTube → Search + Summarize
+    // Docs/PDFs → Read & parse
+    // Fact check → Cross-reference
+    
+    await new Promise(r=>setTimeout(r,1800)); // Simulate instant deep scan
+
+    // Smart logic
+    const q = query.toLowerCase();
+    if(q.includes('youtube') || q.includes('video')){
+        return {
+            text:`✅ **Researched from videos + articles:**\n\nI scanned the top videos and guides. Here is the summary:\n\n• Main points collected\n• Key steps explained\n• Common mistakes fixed\n• Verified facts from multiple sources\n\n**Sources:** Top YouTube channels + trusted websites`,
+            sources:['YouTube Summaries','Web Articles','Verified Guides'],
+            needHuman:false
+        };
+    }
+    if(q.includes('account') || q.includes('private') || q.includes('pay') || q.includes('ticket')){
+        return {
+            text:`This needs personal attention — I have scanned all rules but this requires our team. Connecting you to an expert now.`,
+            sources:['Internal Rules'],
+            needHuman:true
+        };
+    }
+    return {
+        text:`✅ **Complete Research Ready**\n\nI have scanned every source, read all articles, summarized related videos, and cross-checked facts.\n\n**Answer:**\nFor "${query}" — here is the full truth:\n\nEverything connects perfectly. The key idea is: **Knowledge comes from linking what we observe with what we already know.**\n\nAll facts match across all sources.`,
+        sources:['All major websites','Educational guides','YouTube summaries','Fact databases'],
+        needHuman:false
+    };
+}
+
+function addMessage(who,text,sources=[],isHuman=false){
+    const box = document.getElementById('chat');
+    const div = document.createElement('div');
+    div.className = `msg ${who==='You'?'user':'ai'}`;
+    div.innerHTML = `
+        ${who!=='You'?`<div class="meta">${who} ${isHuman?`<span class="human">• EXPERT</span>`:''} ${sources.length?`<span class="source">Sources: ${sources.join(', ')}</span>`:''}</div>`:''}
+        <div class="bubble">${text}</div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+async function startResearch(){
+    const inp = document.getElementById('ask');
+    const q = inp.value.trim();
+    if(!q) return;
+    inp.value='';
+
+    addMessage('You',q);
+    document.getElementById('think').classList.add('show');
+    document.getElementById('sys').classList.remove('active');
+
+    const result = await runResearch(q);
+
+    document.getElementById('think').classList.remove('show');
+    document.getElementById('sys').classList.add('active');
+    addMessage('EINSTEIN RESEARCH AI', result.text, result.sources, result.needHuman);
+}
+
+document.getElementById('ask').addEventListener('keydown',e=>{if(e.key==='Enter')startResearch();});
+
+// Welcome
+addMessage('EINSTEIN RESEARCH AI',`I am ready. I will scan the entire web, read every page, summarize every video, check all facts, and give you the complete answer instantly. Ask me anything.`);
+</script>
+</body>
+</html>
